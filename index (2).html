@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מעקב סמסטר ב׳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#181c27;--surface2:#1e2333;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8eaf0;--muted:#7a8099;--faint:#2a2f45;
+  --ok:#4ec9a0;--warn:#e8c040;--bad:#f06060;
+  --font-body:'Heebo',sans-serif;--font-mono:'IBM Plex Mono',monospace;
+  --radius:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.6;min-height:100vh;padding-bottom:4rem}
+header{border-bottom:1px solid var(--border);padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:100}
+.logo{font-family:var(--font-mono);font-size:13px;color:var(--muted);letter-spacing:.06em}
+.logo span{color:var(--text)}
+.week-badge{font-family:var(--font-mono);font-size:12px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:4px 14px;color:var(--muted)}
+.week-badge b{color:var(--text)}
+.container{max-width:980px;margin:0 auto;padding:0 1.5rem}
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border);margin-bottom:2rem}
+.sc{background:var(--bg);padding:1rem 1.5rem}
+.sc .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.sc .val{font-family:var(--font-mono);font-size:24px;font-weight:500;line-height:1}
+.val.ok{color:var(--ok)}.val.warn{color:var(--warn)}.val.bad{color:var(--bad)}.val.n{color:var(--text)}
+.sec{font-size:11px;font-family:var(--font-mono);color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin:2rem 0 .8rem}
+.courses-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.5rem}
+.cc{background:var(--surface);padding:1.2rem 1.4rem}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.cn{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+.cdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.gb{font-family:var(--font-mono);font-size:12px;padding:2px 10px;border-radius:20px;border:1px solid var(--border2);background:var(--surface2)}
+.sh{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px;font-family:var(--font-mono)}
+.ir{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.il{font-size:12px;color:var(--muted);min-width:80px}
+.tr{flex:1}
+.tr input[type=range]{width:100%;appearance:none;-webkit-appearance:none;height:4px;background:var(--faint);border-radius:2px;outline:none;cursor:pointer}
+.tr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--text);cursor:pointer;border:2px solid var(--bg)}
+.iv{font-family:var(--font-mono);font-size:11px;color:var(--text);min-width:40px;text-align:left}
+.iv .t{color:var(--muted)}
+.div{border-top:1px solid var(--border);margin:10px 0}
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;margin-bottom:1rem}
+.ctabs{display:flex;gap:6px;margin-bottom:1.2rem;flex-wrap:wrap}
+.ctab{font-family:var(--font-mono);font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:background .15s,color .15s}
+.ctab:hover,.ctab.active{background:var(--surface2);color:var(--text)}
+.ctab.active{border-color:rgba(255,255,255,.22)}
+.cw{position:relative;width:100%;height:340px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.li{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-family:var(--font-mono)}
+.note{font-family:var(--font-mono);font-size:11px;color:var(--muted);text-align:center;margin-top:1.5rem}
+.note span{color:var(--text)}
+.wr{display:flex;align-items:center;gap:14px;margin-bottom:1.5rem}
+.wr input[type=range]{flex:1;appearance:none;-webkit-appearance:none;height:4px;background:var(--faint);border-radius:2px;outline:none;cursor:pointer}
+.wr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--text);cursor:pointer;border:2px solid var(--bg)}
+@media(max-width:680px){
+  header{padding:1rem}
+  .summary-strip{grid-template-columns:repeat(2,1fr)}
+  .courses-grid{grid-template-columns:1fr}
+  .container{padding:0 1rem}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">מעקב <span>סמסטר ב׳</span></div>
+  <div class="week-badge">שבוע <b id="hdr-week">—</b> מתוך 14</div>
+</header>
+<div class="summary-strip" style="max-width:100%;padding:0 2rem">
+  <div class="sc"><div class="lbl">שבוע נוכחי</div><div class="val n" id="sum-week">—</div></div>
+  <div class="sc"><div class="lbl">שבועות שנותרו</div><div class="val n" id="sum-left">—</div></div>
+  <div class="sc"><div class="lbl">פער כולל (יח׳)</div><div class="val" id="sum-gap">—</div></div>
+  <div class="sc"><div class="lbl">סגירת פער</div><div class="val" id="sum-close">—</div></div>
+</div>
+<div class="container">
+  <div class="sec">שבוע נוכחי</div>
+  <div class="wr">
+    <input type="range" min="1" max="14" value="9" id="week-slider">
+    <span style="font-family:var(--font-mono);font-size:13px;min-width:60px" id="week-label">שבוע 9</span>
+  </div>
+  <div class="sec">קורסים</div>
+  <div class="courses-grid" id="courses-grid"></div>
+  <div class="sec">גרף התקדמות</div>
+  <div class="chart-wrap">
+    <div class="ctabs" id="chart-tabs">
+      <button class="ctab active" data-view="all">הכל</button>
+      <button class="ctab" data-view="fiz">פיזיקה 2</button>
+      <button class="ctab" data-view="hdv">חדווא 2</button>
+      <button class="ctab" data-view="mdr">מד״ר</button>
+      <button class="ctab" data-view="mls">מל״ס</button>
+    </div>
+    <div class="cw"><canvas id="mainChart" role="img" aria-label="גרף התקדמות">גרף</canvas></div>
+    <div class="legend" id="chart-legend"></div>
+  </div>
+  <div class="note">עודכן לאחרונה: <span id="updated-at">—</span></div>
+</div>
+<script>
+const TW=14, LS_KEY='smt_v3';
+const COURSES=[
+  {id:'fiz',name:'פיזיקה 2',color:'#5b9cf6',
+   items:[{key:'shiurim',label:'שיעורים',weekly:2},{key:'targulim',label:'תרגולים',weekly:1},{key:'matalot',label:'מטלות',weekly:1}]},
+  {id:'hdv',name:'חדווא 2',color:'#4ec9a0',
+   items:[{key:'shiurim',label:'שיעורים',weekly:2},{key:'targulim',label:'תרגולים',weekly:1},{key:'matalot',label:'מטלות',weekly:1}]},
+  {id:'mdr',name:'מד״ר',color:'#f08060',
+   items:[{key:'shiurim',label:'שיעורים',weekly:1},{key:'targulim',label:'תרגולים',weekly:1},{key:'matalot',label:'מטלות',weekly:1}]},
+  {id:'mls',name:'מל״ס',color:'#b57cf0',
+   items:[{key:'shiurim',label:'שיעורים',weekly:1},{key:'targulim',label:'תרגולים',weekly:1},{key:'matalot',label:'פרויקטים',weekly:6/14,total:6}]},
+];
+
+function weeklyRate(c){return c.items.reduce((s,it)=>s+it.weekly,0);}
+
+function defaultState(){
+  const st={currentWeek:9,updatedAt:null,courses:{}};
+  COURSES.forEach(c=>{
+    st.courses[c.id]={catchup:0};
+    c.items.forEach(it=>{
+      const def=it.total?Math.min(it.total,Math.round(it.weekly*9)):Math.round(it.weekly*9);
+      st.courses[c.id]['cls_'+it.key]=def;
+      st.courses[c.id]['me_'+it.key]=0;
+    });
+  });
+  return st;
+}
+function loadState(){try{const r=localStorage.getItem(LS_KEY);if(r)return JSON.parse(r);}catch(e){}return defaultState();}
+function saveState(){APP.updatedAt=new Date().toISOString();localStorage.setItem(LS_KEY,JSON.stringify(APP));renderNote();}
+
+let APP=loadState();
+
+function clsDone(cid){const c=COURSES.find(x=>x.id===cid),s=APP.courses[cid];return c.items.reduce((sum,it)=>sum+(s['cls_'+it.key]||0),0);}
+function meDone(cid){const c=COURSES.find(x=>x.id===cid),s=APP.courses[cid];return c.items.reduce((sum,it)=>sum+(s['me_'+it.key]||0),0);}
+function gap(cid){return Math.max(0,clsDone(cid)-meDone(cid));}
+function totalGap(){return COURSES.reduce((s,c)=>s+gap(c.id),0);}
+
+// class line: actual up to now, then continues at weekly rate
+function classAt(c,w){
+  const cw=APP.currentWeek,done=clsDone(c.id);
+  if(w<=cw) return +(done*(w/cw)).toFixed(2);
+  return +(done+weeklyRate(c)*(w-cw)).toFixed(2);
+}
+// me line: actual up to now, then continues at weekly rate + catchup
+function meAt(c,w){
+  const cw=APP.currentWeek,done=meDone(c.id),catchup=APP.courses[c.id].catchup||0;
+  if(w<=cw) return +(done*(w/cw)).toFixed(2);
+  return +(done+(weeklyRate(c)+catchup)*(w-cw)).toFixed(2);
+}
+function findClose(c){
+  for(let w=APP.currentWeek;w<=TW;w++){if(meAt(c,w)>=classAt(c,w)-0.05)return w;}
+  return null;
+}
+
+function renderCards(){
+  const grid=document.getElementById('courses-grid');
+  grid.innerHTML='';
+  COURSES.forEach(c=>{
+    const s=APP.courses[c.id],g=gap(c.id);
+    const gc=g===0?'var(--ok)':g<2?'var(--warn)':'var(--bad)';
+    const card=document.createElement('div');
+    card.className='cc';
+
+    const rows=(prefix)=>c.items.map(it=>{
+      const maxNow=it.total?it.total:Math.round(it.weekly*APP.currentWeek);
+      const cur=s[prefix+it.key]||0;
+      return `<div class="ir">
+        <span class="il">${it.label}</span>
+        <div class="tr"><input type="range" min="0" max="${maxNow}" step="1" value="${Math.min(cur,maxNow)}"
+          data-cid="${c.id}" data-key="${prefix}${it.key}" data-max="${maxNow}"></div>
+        <span class="iv" id="v-${c.id}-${prefix}${it.key}">${Math.min(cur,maxNow)}<span class="t">/${maxNow}</span></span>
+      </div>`;
+    }).join('');
+
+    card.innerHTML=`
+      <div class="ch">
+        <span class="cn"><span class="cdot" style="background:${c.color}"></span>${c.name}</span>
+        <span class="gb" id="badge-${c.id}" style="color:${gc}">פער: ${g.toFixed(1)} יח׳</span>
+      </div>
+      <div class="sh">הכיתה עד כה</div>${rows('cls_')}
+      <div class="div"></div>
+      <div class="sh">אני עד כה</div>${rows('me_')}
+      <div class="div"></div>
+      <div class="sh">קצב השלמה נוסף</div>
+      <div class="ir">
+        <span class="il">+יח׳/שבוע</span>
+        <div class="tr"><input type="range" min="0" max="6" step="0.5" value="${s.catchup||0}"
+          data-cid="${c.id}" data-key="catchup"></div>
+        <span class="iv" id="v-${c.id}-catchup">${(s.catchup||0).toFixed(1)}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-family:var(--font-mono)">
+        קצב שוטף: ${weeklyRate(c).toFixed(2)} יח׳/שבוע${c.id==='mls'?' · 6 פרויקטים':''}
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  grid.querySelectorAll('input[type=range]').forEach(el=>{
+    el.addEventListener('input',e=>{
+      const {cid,key,max}=e.target.dataset;
+      const val=+e.target.value;
+      APP.courses[cid][key]=val;
+      const el2=document.getElementById(`v-${cid}-${key}`);
+      if(key==='catchup') el2.textContent=val.toFixed(1);
+      else el2.innerHTML=`${val}<span class="t">/${max}</span>`;
+      updateBadge(cid);
+      updateSummary();
+      updateChart();
+      saveState();
+    });
+  });
+}
+
+function updateBadge(cid){
+  const g=gap(cid),gc=g===0?'var(--ok)':g<2?'var(--warn)':'var(--bad)';
+  const el=document.getElementById('badge-'+cid);
+  if(el){el.textContent=`פער: ${g.toFixed(1)} יח׳`;el.style.color=gc;}
+}
+
+function updateSummary(){
+  const cw=APP.currentWeek;
+  document.getElementById('sum-week').textContent=cw;
+  document.getElementById('sum-left').textContent=TW-cw;
+  document.getElementById('hdr-week').textContent=cw;
+  document.getElementById('week-label').textContent=`שבוע ${cw}`;
+  const tg=totalGap();
+  const gEl=document.getElementById('sum-gap');
+  gEl.textContent=tg.toFixed(1);
+  gEl.className='val '+(tg===0?'ok':tg<5?'warn':'bad');
+  let lc=null;
+  COURSES.forEach(c=>{const w=findClose(c);if(w&&(lc===null||w>lc))lc=w;});
+  const cEl=document.getElementById('sum-close');
+  if(tg===0){cEl.textContent='✓ אין פער';cEl.className='val ok';}
+  else if(lc){cEl.textContent=`שבוע ${lc}`;cEl.className='val '+(lc<=14?'ok':'bad');}
+  else{cEl.textContent='לא נסגר';cEl.className='val bad';}
+}
+
+document.getElementById('week-slider').addEventListener('input',e=>{
+  APP.currentWeek=+e.target.value;
+  renderCards();updateSummary();updateChart();saveState();
+});
+
+let chartInst=null,currentView='all';
+
+document.getElementById('chart-tabs').addEventListener('click',e=>{
+  const btn=e.target.closest('.ctab');if(!btn)return;
+  currentView=btn.dataset.view;
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(chartInst){chartInst.data.datasets=buildDatasets().filter(d=>currentView==='all'||d.courseId===currentView);chartInst.update();}
+});
+
+function buildDatasets(){
+  return COURSES.flatMap(c=>[
+    {label:`${c.name} — כיתה`,data:Array.from({length:TW},(_,i)=>classAt(c,i+1)),
+     borderColor:c.color,backgroundColor:'transparent',borderWidth:1.5,borderDash:[],pointRadius:0,tension:0.1,courseId:c.id},
+    {label:`${c.name} — אני`,data:Array.from({length:TW},(_,i)=>meAt(c,i+1)),
+     borderColor:c.color,backgroundColor:'transparent',borderWidth:2,borderDash:[5,4],pointRadius:0,tension:0.1,courseId:c.id},
+  ]);
+}
+
+Chart.register({
+  id:'nowLine',
+  afterDraw(chart){
+    const idx=APP.currentWeek-1,meta=chart.getDatasetMeta(0);
+    if(!meta||!meta.data[idx])return;
+    const x=meta.data[idx].x,ctx=chart.ctx;
+    ctx.save();ctx.beginPath();ctx.setLineDash([4,4]);
+    ctx.strokeStyle='rgba(255,255,255,0.18)';ctx.lineWidth=1;
+    ctx.moveTo(x,chart.chartArea.top);ctx.lineTo(x,chart.chartArea.bottom);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='10px monospace';
+    ctx.fillText('עכשיו',x+4,chart.chartArea.top+14);ctx.restore();
+  }
+});
+
+function updateChart(){
+  const labels=Array.from({length:TW},(_,i)=>`${i+1}`);
+  const allDs=buildDatasets();
+  const visible=currentView==='all'?allDs:allDs.filter(d=>d.courseId===currentView);
+  if(chartInst){chartInst.data.labels=labels;chartInst.data.datasets=visible;chartInst.update();return;}
+  chartInst=new Chart(document.getElementById('mainChart'),{
+    type:'line',data:{labels,datasets:visible},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2333',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#e8eaf0',bodyColor:'#7a8099',
+        callbacks:{title:ctx=>`שבוע ${ctx[0].label}`,label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} יח׳`}}},
+      scales:{
+        x:{title:{display:true,text:'שבוע',color:'#7a8099',font:{size:11}},ticks:{autoSkip:false,maxRotation:0,color:'#7a8099',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
+        y:{title:{display:true,text:'יחידות',color:'#7a8099',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7a8099',font:{size:10}}}
+      }}
+  });
+  const leg=document.getElementById('chart-legend');
+  COURSES.forEach(c=>{
+    const s1=document.createElement('span');s1.className='li';
+    s1.innerHTML=`<span style="display:inline-block;width:20px;height:2px;background:${c.color};border-radius:1px"></span>${c.name} כיתה`;
+    const s2=document.createElement('span');s2.className='li';
+    s2.innerHTML=`<svg width="20" height="6" style="vertical-align:middle"><line x1="0" y1="3" x2="20" y2="3" stroke="${c.color}" stroke-width="2" stroke-dasharray="5,4"/></svg>${c.name} אני`;
+    leg.appendChild(s1);leg.appendChild(s2);
+  });
+}
+
+function renderNote(){
+  const el=document.getElementById('updated-at');
+  if(!APP.updatedAt){el.textContent='לא עודכן עדיין';return;}
+  el.textContent=new Date(APP.updatedAt).toLocaleString('he-IL',{dateStyle:'short',timeStyle:'short'});
+}
+
+document.getElementById('week-slider').value=APP.currentWeek;
+renderCards();updateSummary();updateChart();renderNote();
+</script>
+</body>
+</html>
